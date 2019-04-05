@@ -11,6 +11,8 @@ import org.junit.Test;
 import java.util.List;
 import java.util.Set;
 import java.util.function.Predicate;
+import java.util.stream.Collector;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static org.hamcrest.Matchers.hasItems;
@@ -27,11 +29,23 @@ public class Exercise8Test extends ClassicOnlineStore {
         /**
          * Create a set of item names that are in {@link Customer.wantToBuy} but not on sale in any shop.
          */
-        List<String> itemListOnSale = null;
-        Set<String> itemSetNotOnSale = null;
+        List<String> itemListOnSale = shopStream
+                .flatMap(item->item.getItemList().stream())
+                .map(Item::getName)
+                .collect(Collectors.toList());
+        Set<String> itemSetNotOnSale = customerStream
+                .flatMap(customer->customer.getWantToBuy().stream())
+                .map(Item::getName)
+                .filter(itemName-> itemListOnSale.stream().noneMatch(itemName::equals))
+                //powyższa linia jest bardzo ważna i nowa w zapisie, porównanie elementu z jednej listy
+                //z każdym elementem z drugiej listy
+                //nie da się tego zapisać itemName-> itemName."coś tam" jest znacznie mniejszy dostęp do metod
+                .collect(Collectors.toSet());
 
         assertThat(itemSetNotOnSale, hasSize(3));
         assertThat(itemSetNotOnSale, hasItems("bag", "pants", "coat"));
+        //DONE
+        //ToDo powtórzyć, skorzystałem ze siciągi!!!
     }
 
     @Difficult @Test
@@ -44,8 +58,18 @@ public class Exercise8Test extends ClassicOnlineStore {
          * Items that are not on sale can be counted as 0 money cost.
          * If there is several same items with different prices, customer can choose the cheapest one.
          */
-        List<Item> onSale = null;
-        Predicate<Customer> havingEnoughMoney = null;
+        List<Item> onSale = shopStream.flatMap(item->item.getItemList().stream()).collect(Collectors.toList());
+        //w porównaniu z tym co było w poprzednim zadaniu pomijamy krok .map(Item::GetName) bo tak dostaniemy
+        //listę Stringów a chcemy Itemy
+        Predicate<Customer> havingEnoughMoney = customer -> customer.getBudget() >= customer.getWantToBuy()
+                //porównujemy zwykłym znakiem większy/równy budżet klienta z 
+                .stream()
+                .mapToInt(wantedItem -> onSale.stream()
+                        .filter(shopItem -> shopItem.getName().equals(wantedItem.getName()))
+                                .sorted((o1, o2) -> o1.getPrice() - o2.getPrice())
+                                .findFirst().map(Item::getPrice).orElse(0)
+                ).sum();
+        //O jaPawle!!!
         List<String> customerNameList = null;
 
         assertThat(customerNameList, hasSize(7));

@@ -9,6 +9,9 @@ import org.junit.Test;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Function;
+import java.util.stream.Collector;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static org.hamcrest.Matchers.is;
@@ -23,7 +26,12 @@ public class Exercise3Test extends ClassicOnlineStore {
         /**
          * Count how many items there are in {@link Customer.wantToBuy} using {@link Stream#count}
          */
-        long sum = 0L;
+        long sum = customerList.stream().flatMap(customer -> customer.getWantToBuy().stream()).count();
+        // flatMap przyjmuje Functiona a zwraca stream<R> to samo co map, ale może getWantToBuy ma
+        //więcej zmiennych i spłaszczamy to by dostać tylko to co nas interesuje
+        //getWantToBuy zwtraca listę itemów dlatego trzeba to ponownie wrzucić w stream by tą listę obrobić
+//        long sum = customerList.stream().map(Customer::getWantToBuy).count();//tak nie poszło
+//        long sum = customerList.stream().map(Customer::getWantToBuy.stream).count();//tak nie poszło
 
         assertThat(sum, is(32L));
     }
@@ -36,11 +44,13 @@ public class Exercise3Test extends ClassicOnlineStore {
          * Find the richest customer's budget by using {@link Stream#max} and {@link Comparator#naturalOrder}
          * Don't use {@link Stream#sorted}
          */
-        Comparator<Integer> comparator = null;
-        Optional<Integer> richestCustomer = null;
+        Comparator<Integer> comparator = Comparator.naturalOrder();
+        Optional<Integer> richestCustomer = customerList.stream().map(Customer::getBudget).max(comparator);
+//      Optional<Integer> richestCustomer = customerList.stream().map(Customer::getBudget).max(Comparator.naturalOrder());
 
         assertThat(comparator.getClass().getSimpleName(), is("NaturalOrderComparator"));
         assertThat(richestCustomer.get(), is(12000));
+        //DONE
     }
 
     @Easy @Test
@@ -51,8 +61,8 @@ public class Exercise3Test extends ClassicOnlineStore {
          * Find the youngest customer by using {@link Stream#min}
          * Don't use {@link Stream#sorted}
          */
-        Comparator<Customer> comparator = null;
-        Optional<Customer> youngestCustomer = null;
+        Comparator<Customer> comparator = Comparator.comparingInt(Customer::getAge);
+        Optional<Customer> youngestCustomer = customerList.stream().min(comparator);
 
         assertThat(youngestCustomer.get(), is(customerList.get(8)));
     }
