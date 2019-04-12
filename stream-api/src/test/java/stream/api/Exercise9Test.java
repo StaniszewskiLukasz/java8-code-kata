@@ -8,17 +8,14 @@ import common.test.tool.util.CollectorImpl;
 
 import org.junit.Test;
 
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.EnumSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.security.cert.CollectionCertStoreParameters;
+import java.util.*;
 import java.util.function.BiConsumer;
 import java.util.function.BinaryOperator;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collector;
+import java.util.stream.Collectors;
 
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.is;
@@ -34,13 +31,17 @@ public class Exercise9Test extends ClassicOnlineStore {
          * Implement a {@link Collector} which can create a String with comma separated names shown in the assertion.
          * The collector will be used by serial stream.
          */
-        Supplier<Object> supplier = null;
-        BiConsumer<Object, String> accumulator = null;
-        BinaryOperator<Object> combiner = null;
-        Function<Object, String> finisher = null;
+//        Supplier<Object> supplier = customerList.stream().map(Customer::getName).collect(Collector.of());
+//        Supplier<Object> supplier = Collector.of(customerList.stream().map(Customer::getName).collect(Collector.of(Object::new)));
+        //nie tak jak powyżej ale tak jak poniżej
+        Supplier<StringJoiner> supplier1 = ()->new StringJoiner(",","","");
+        //tu twotzymy StringJoinera mowiąc że dzielnikiem ma być " a poprzedzać i kończyć całość będą znaki".
+        BiConsumer<StringJoiner, String> accumulator = StringJoiner::add;
+        BinaryOperator<StringJoiner> combiner = null;
+        Function<StringJoiner, String> finisher = StringJoiner::toString;
 
         Collector<String, ?, String> toCsv =
-            new CollectorImpl<>(supplier, accumulator, combiner, finisher, Collections.emptySet());
+            new CollectorImpl<>(supplier1, accumulator, combiner, finisher, Collections.emptySet());
         String nameAsCsv = customerList.stream().map(Customer::getName).collect(toCsv);
         assertThat(nameAsCsv, is("Joe,Steven,Patrick,Diana,Chris,Kathy,Alice,Andrew,Martin,Amy"));
     }
